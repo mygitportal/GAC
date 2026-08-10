@@ -2,6 +2,8 @@ name: Build AetherSpot APK
 on:
   push:
     branches: [aetherspot-build-android9]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
