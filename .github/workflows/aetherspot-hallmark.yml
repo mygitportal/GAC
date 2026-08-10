@@ -2,7 +2,6 @@ name: Build AetherSpot Hallmark APK
 on:
   pull_request:
     branches: [main]
-  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -17,8 +16,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
-      - name: Unpack AetherSpot source
-        run: unzip -q AetherSpot-Hallmark-v0.2-source.zip
+      - name: Reassemble source archive
+        run: cat source.part.00 source.part.01 source.part.02 source.part.03 > AetherSpot-Hallmark-v0.2-source.zip
+      - name: Verify and unpack source
+        run: unzip -t AetherSpot-Hallmark-v0.2-source.zip && unzip -q AetherSpot-Hallmark-v0.2-source.zip
       - name: Build debug APK
         working-directory: AetherSpot
         run: gradle --no-daemon clean assembleDebug
