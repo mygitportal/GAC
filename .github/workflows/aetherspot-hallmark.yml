@@ -1,0 +1,50 @@
+name: Build AetherSpot Hallmark APK
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.13'
+      - name: Reassemble source archive
+        run: cat source.part.00 source.part.01 source.part.02 source.part.03 > AetherSpot-Hallmark-v0.2-source.zip
+      - name: Verify and unpack source
+        run: unzip -t AetherSpot-Hallmark-v0.2-source.zip && unzip -q AetherSpot-Hallmark-v0.2-source.zip
+      - name: Align Compose dependencies with official BOM
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('AetherSpot/app/build.gradle.kts')
+          s=p.read_text()
+          s=s.replace('dependencies {\n', 'dependencies {\n    val composeBom = platform("androidx.compose:compose-bom:2026.06.00")\n    implementation(composeBom)\n\n', 1)
+          replacements={
+            'androidx.activity:activity-compose:1.12.2':'androidx.activity:activity-compose:1.13.0',
+            'androidx.compose.material3:material3:1.4.0':'androidx.compose.material3:material3',
+            'androidx.compose.material:material-icons-extended:1.11.4':'androidx.compose.material:material-icons-extended',
+            'androidx.compose.ui:ui:1.11.4':'androidx.compose.ui:ui',
+            'androidx.compose.ui:ui-tooling-preview:1.11.4':'androidx.compose.ui:ui-tooling-preview',
+            'androidx.compose.ui:ui-tooling:1.11.4':'androidx.compose.ui:ui-tooling',
+            'androidx.compose.material3.adaptive:adaptive:1.2.0':'androidx.compose.material3.adaptive:adaptive',
+          }
+          for a,b in replacements.items(): s=s.replace(a,b)
+          p.write_text(s)
+          PY
+      - name: Build debug APK
+        working-directory: AetherSpot
+        run: gradle --no-daemon clean assembleDebug
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AetherSpot-Hallmark-v0.2-debug
+          path: AetherSpot/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

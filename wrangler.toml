@@ -1,3 +1,0 @@
-name = "wls-seal-unlock"
-main = "worker/unlock.js"
-compatibility_date = "2024-11-01"
